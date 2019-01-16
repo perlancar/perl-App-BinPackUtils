@@ -18,6 +18,14 @@ my %arg_bin_size = (
     },
 );
 
+my %argopt_bin_size_for_dvd = (
+    bin_size => {
+        schema => ['filesize*'],
+        default => 4494*1024*1024,
+        cmdline_aliases => {s=>{}},
+    },
+);
+
 my %arg_files = (
     files => {
         schema => ['array*', of=>'filename*', min_len=>1],
@@ -160,6 +168,7 @@ $SPEC{bin_files_into_dvds} = {
     args => {
         %arg_files,
         %arg_move,
+        %argopt_bin_size_for_dvd,
     },
     deps => {
         prog => 'du', # XXX indirectly
@@ -169,10 +178,10 @@ sub bin_files_into_dvds {
     my %args = @_;
 
     bin_files(
-        files => $args{files},
-        move  => $args{move},
+        files      => $args{files},
+        move       => $args{move},
         bin_prefix => "dvd",
-        bin_size   => 4493*1024*1024,
+        bin_size   => $args{bin_size} // 4493*1024*1024,
     );
 }
 
