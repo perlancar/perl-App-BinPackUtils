@@ -6,6 +6,7 @@ package App::BinPackUtils;
 use 5.010001;
 use strict;
 use warnings;
+use Log::ger;
 
 our %SPEC;
 
@@ -119,16 +120,37 @@ sub bin_files {
     # reformat as a single 2D table
     my @rows;
     my $bin_num = 0;
+    my %bin_names;
     for my $bin (@{ $res->[2] }) {
         $bin_num++;
         for my $item (@{ $bin->{items} }) {
+            my $bin_name = "$bin_prefix$bin_num";
+            $bin_names{$bin_name}++;
             push @rows, {
-                bin => "$bin_prefix$bin_num",
+                bin => $bin_name,
                 file=>$item->{label},
                 size=>$item->{size},
             };
         }
     }
+
+    if ($args{move}) {
+        # create all the directories for bins
+        for my $bin_name (sort keys %bin_names) {
+            return [412, "Directory $bin_name must not already exist"]
+                if -d $bin_name;
+            log_info "Creating directory $bin_name ...";
+            mkdir $bin_name or return [500, "Can't create directory $bin_name: $!"];
+        }
+        # move files to bins
+        for my $row (@rows) {
+            log_info "Moving '$row->{file}' to $row->{bin} ...";
+            rename($row->{file}, "$row->{bin}/$row->{file}") or do {
+                log_warn "Can't move '$row->{file}' to $row->{bin}/: $!, skipped";
+            };
+        }
+    }
+
     [200, "OK", \@rows];
 }
 
