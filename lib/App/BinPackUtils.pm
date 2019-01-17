@@ -194,7 +194,8 @@ This distribution provides the following command-line utilities:
 
 #INSERT_EXECS_LIST
 
-Keywords: binpack, bin pack, packbin, pack bins, packing, binning.
+Keywords: binpack, bin pack, packbin, pack bins, packing, binning, dvd planning,
+files packing.
 
 
 =head1 SEE ALSO
