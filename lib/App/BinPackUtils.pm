@@ -26,7 +26,7 @@ my %argopt_dvd_size = (
     },
 );
 
-my %arg_files = (
+my %arg0_files = (
     files => {
         schema => ['array*', of=>'filename*', min_len=>1],
         req => 1,
@@ -35,7 +35,7 @@ my %arg_files = (
     },
 );
 
-my %arg_move = (
+my %argopt_move = (
     move => {
         summary => 'Actually move the files to the bins',
         schema => 'bool*',
