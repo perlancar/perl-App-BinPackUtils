@@ -26,6 +26,14 @@ my %argopt_num_bins = (
     },
 );
 
+my %argopt_num_dvds = (
+    num_dvds => {
+        summary => 'Just return the number of DVDs required',
+        schema => 'true*',
+        cmdline_aliases => {n=>{}},
+    },
+);
+
 my %argopt_dvd_size = (
     dvd_size => {
         schema => ['filesize*'],
@@ -180,10 +188,7 @@ $SPEC{bin_files_into_dvds} = {
         %arg0_files,
         %argopt_move,
         %argopt_dvd_size,
-        %argopt_num_bins,
-    },
-    deps => {
-        prog => 'du', # XXX indirectly
+        %argopt_num_dvds,
     },
 };
 sub bin_files_into_dvds {
@@ -194,7 +199,36 @@ sub bin_files_into_dvds {
         move       => $args{move},
         bin_prefix => "dvd",
         bin_size   => $args{dvd_size} // 4493*1024*1024,
-        num_bins   => $args{num_bins},
+        num_bins   => $args{num_dvds},
+    );
+}
+
+$SPEC{count_number_of_dvds_required} = {
+    v => 1.1,
+    summary => 'Count the number of DVDs required to contain the files',
+    description => <<'_',
+
+This:
+
+    % count-number-of-dvds-requires *
+
+is a shortcut for:
+
+    % bin-files-into-dvds -n *
+
+_
+    args => {
+        %arg0_files,
+        %argopt_move,
+        %argopt_dvd_size,
+    },
+};
+sub count_number_of_dvds_required {
+    my %args = @_;
+
+    bin_files_into_dvds(
+        %args,
+        num_dvds => 1,
     );
 }
 
