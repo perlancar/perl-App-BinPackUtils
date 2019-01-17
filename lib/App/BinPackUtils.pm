@@ -18,6 +18,14 @@ my %arg_bin_size = (
     },
 );
 
+my %argopt_num_bins = (
+    num_bins => {
+        summary => 'Just return the number of bins required',
+        schema => 'true*',
+        cmdline_aliases => {n=>{}},
+    },
+);
+
 my %argopt_dvd_size = (
     dvd_size => {
         schema => ['filesize*'],
@@ -61,6 +69,7 @@ _
             greedy => 1,
             cmdline_src => 'stdin_or_args',
         },
+        %argopt_num_bins,
     },
     examples => [
         {
@@ -82,7 +91,8 @@ sub pack_bins {
             $bp->add_item(label => $item[0], size => $item[1]);
         }
     }
-    [200, "OK", [$bp->pack_bins]];
+    my @bins = $bp->pack_bins;
+    [200, "OK", $args{num_bins} ? scalar(@bins) : \@bins];
 }
 
 $SPEC{bin_files} = {
@@ -94,8 +104,9 @@ $SPEC{bin_files} = {
             schema => 'filename*',
             default => 'bin',
         },
-        %arg_files,
-        %arg_move,
+        %arg0_files,
+        %argopt_move,
+        %argopt_num_bins,
     },
     deps => {
         prog => 'du',
@@ -159,16 +170,17 @@ sub bin_files {
         }
     }
 
-    [200, "OK", \@rows];
+    [200, "OK", $args{num_bins} ? scalar(keys %bin_names) : \@rows];
 }
 
 $SPEC{bin_files_into_dvds} = {
     v => 1.1,
     summary => 'Put files into DVD bins',
     args => {
-        %arg_files,
-        %arg_move,
+        %arg0_files,
+        %argopt_move,
         %argopt_dvd_size,
+        %argopt_num_bins,
     },
     deps => {
         prog => 'du', # XXX indirectly
@@ -182,6 +194,7 @@ sub bin_files_into_dvds {
         move       => $args{move},
         bin_prefix => "dvd",
         bin_size   => $args{dvd_size} // 4493*1024*1024,
+        num_bins   => $args{num_bins},
     );
 }
 
