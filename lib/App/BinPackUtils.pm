@@ -37,7 +37,7 @@ my %argopt_num_dvds = (
 my %argopt_dvd_size = (
     dvd_size => {
         schema => ['filesize*'],
-        default => 4494*1024*1024,
+        default => 4470*1024*1024,
         cmdline_aliases => {s=>{}},
     },
 );
