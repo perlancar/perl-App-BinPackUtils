@@ -22,6 +22,20 @@ my %arg_bin_size = (
     },
 );
 
+my %argopt_bin_size = (
+    bin_size => {
+        schema => ['filesize*'],
+        cmdline_aliases => {s=>{}},
+    },
+);
+
+my %argopt_bin_max_items = (
+    bin_max_items => {
+        schema => ['posint*'],
+        cmdline_aliases => {i=>{}},
+    },
+);
+
 my %argopt_num_bins = (
     num_bins => {
         summary => 'Just return the number of bins required',
@@ -72,7 +86,7 @@ my %argopt_move = (
 
 $SPEC{pack_bins} = {
     v => 1.1,
-    summary => 'Pack items into bin',
+    summary => 'Pack items into bin, based on bin size',
     args => {
         %arg_bin_size,
         items => {
@@ -117,9 +131,10 @@ sub pack_bins {
 
 $SPEC{bin_files} = {
     v => 1.1,
-    summary => 'Put files into bins',
+    summary => 'Put files into bins of certain size (or number of items)',
     args => {
-        %arg_bin_size,
+        %argopt_bin_size,
+        %argopt_bin_max_items,
         bin_prefix => {
             schema => 'filename*',
             default => 'bin',
@@ -129,33 +144,58 @@ $SPEC{bin_files} = {
         %argopt_move,
         %argopt_num_bins,
     },
+    args_rels => {
+        req_one => [qw/bin_size bin_max_items/],
+    },
     deps => {
         prog => 'du',
     },
+    examples => [
+        {
+            summary => 'Put at most 100MB in each bin, move the files',
+            src => 'bin-files --bin-size 100MB --move *.jpg',
+            src_plang => 'bash',
+            test => 0,
+            'x.doc.show_result' => 0,
+        },
+        {
+            summary => 'Put at most 1000 files in each bin, move the files',
+            src => 'bin-files --bin-max-items 1000 --move *.jpg',
+            src_plang => 'bash',
+            test => 0,
+            'x.doc.show_result' => 0,
+        },
+    ],
 };
 sub bin_files {
     require String::ShellQuote;
 
     my %args = @_;
+    my $bin_size = $args{bin_size};
+    my $bin_max_items = $args{bin_max_items};
     my $bin_prefix = $args{bin_prefix} // "bin";
 
     my @items;
     for my $file (@{ $args{files} }) {
         return [404, "File '$file' does not exist"] unless -e $file;
 
-        my $cmd = "du ".($args{dereference_files} ? "-D " : "")."--apparent-size -sb ".
-            String::ShellQuote::shell_quote($file);
-        my $out = `$cmd`;
-        my $size;
-        if ($out =~ /\A(\d+)/) {
-            $size = $1;
+        if (defined $bin_size) {
+            my $cmd = "du ".($args{dereference_files} ? "-D " : "")."--apparent-size -sb ".
+                String::ShellQuote::shell_quote($file);
+            my $out = `$cmd`;
+            my $size;
+            if ($out =~ /\A(\d+)/) {
+                $size = $1;
+            } else {
+                return [500, "Cannot find the size of '$file': $!"];
+            }
+            push @items, [$file, $size];
         } else {
-            return [500, "Cannot find the size of '$file': $!"];
+            push @items, [$file, 1];
         }
-        push @items, [$file, $size];
     }
 
-    my $res = pack_bins(bin_size => $args{bin_size}, items => \@items);
+    my $res = pack_bins(bin_size => $bin_size // $bin_max_items, items => \@items);
     return $res unless $res->[0] == 200;
 
     # reformat as a single 2D table
