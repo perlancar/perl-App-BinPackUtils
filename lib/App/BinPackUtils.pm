@@ -143,7 +143,7 @@ sub bin_files {
     for my $file (@{ $args{files} }) {
         return [404, "File '$file' does not exist"] unless -e $file;
 
-        my $cmd = "du ".($args{dereference_files} ? "-D " : "")."-sb ".
+        my $cmd = "du ".($args{dereference_files} ? "-D " : "")."--apparent-size -sb ".
             String::ShellQuote::shell_quote($file);
         my $out = `$cmd`;
         my $size;
