@@ -2,3 +2,4 @@ App-BinPackUtils-*
 .build
 *~
 nytprof*
+.DS_Store
