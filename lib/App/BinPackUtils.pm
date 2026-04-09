@@ -90,7 +90,7 @@ $SPEC{pack_bins} = {
     args => {
         %arg_bin_size,
         items => {
-            schema => ['array*', of=>'str*'],
+            schema => ['array*', of=>['any*', of=>['str*', ['array*', len=>2]]]],
             summary => 'The items to be binned',
             description => <<'_',
 
